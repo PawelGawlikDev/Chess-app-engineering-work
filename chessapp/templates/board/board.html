@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'chessboard.min.css'%}">
+    <script src="{% static 'jquery.min.js'%}"></script>
+    <script src="{% static 'chessboard.min.js'%}"></script> <!-- W static/chessboardjs jest zdefiniwana ścieżka do zdjęć figur a po odpaleniu podstrony dodwana jest do tego jeszcze ścieżka z urls.py   -->
+    <script src="{% static 'chess.min.js'%}"></script>
+</head>
+<body>
+    <div id="board1" style="width: 400px"></div>
+    <br>
+    <p>Hello world</p>
+</body>
+    <script>
+        var config = {
+        position: 'start',
+        draggable: true
+        }
+        var board1 = ChessBoard('board1', config);
+    </script>
+</html>
