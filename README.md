@@ -1,2 +1,1 @@
 "# Aplikacja-szachowa" 
-"# ProjektNowy" 
