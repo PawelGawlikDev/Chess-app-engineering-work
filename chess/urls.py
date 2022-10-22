@@ -16,14 +16,14 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import TemplateView
-
-from chessapp .views import *
+from chessapp.views import *
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path("accounts/", include("accounts.urls")),
-    path('accounts/', include("django.contrib.auth.urls")),
-    path('', TemplateView.as_view(template_name='home.html'), name='home'),
-    path('partie/', index, name='games'),
-    path('partie/user/<id>/', partie, name='board')
-]
+                  path('admin/', admin.site.urls),
+                  path("accounts/", include("accounts.urls")),
+                  path('accounts/', include("django.contrib.auth.urls")),
+                  path('', TemplateView.as_view(template_name='home.html'), name='home'),
+                  path('partie/', index, name='games'),
+                  path('partie/user/<id>/', partie, name='board'),
+                  path('edit/', AddPostView.as_view(model=Partie, success_url="/edit/"), name='EditBoard')
+              ]

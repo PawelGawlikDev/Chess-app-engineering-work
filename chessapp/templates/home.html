@@ -1,11 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    {% load static %}
-    <link rel="stylesheet" type="text/css" href="{% static 'chessboard.min.css'%}">
-    <script src="{% static 'jquery.min.js'%}"></script>
-    <script src="{% static 'chessboard.min.js'%}"></script>
-    <script src="{% static 'chess.min.js'%}"></script>
     <meta charset="UTF-8">
     <title>Home page</title>
 </head>
@@ -16,7 +11,7 @@
       Hi {{ user.username }}!
       <p><a href="{% url 'logout' %}">Log Out</a></p>
       <p><a href="{% url 'games' %}">Games</a></p>
-      <div id="board" style="width: 400px"></div>
+      <p><a href="{% url 'EditBoard' %}">Edit Board</a></p>
     {% else %}
       <p>You are not logged in</p>
       <a href="{% url 'login' %}">Log In</a>
