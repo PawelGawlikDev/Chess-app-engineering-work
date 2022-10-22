@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     {% load static %}
+<<<<<<< HEAD
     <script src="{% static 'jquery.min.js'%}"></script>
     <link href='http://fonts.googleapis.com/css?family=Roboto:400,700,400italic,700italic|Roboto+Slab:400,700' rel='stylesheet' type='text/css'>
     <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.1/css/font-awesome.css" rel="stylesheet">
@@ -211,4 +212,23 @@ $(document).ready(function() {
 
     </script>
   </body>
+=======
+    <link rel="stylesheet" type="text/css" href="{% static 'chessboard.min.css'%}">
+    <script src="{% static 'jquery.min.js'%}"></script>
+    <script src="{% static 'chessboard.min.js'%}"></script> <!-- W static/chessboardjs jest zdefiniwana ścieżka do zdjęć figur a po odpaleniu podstrony dodwana jest do tego jeszcze ścieżka z urls.py   -->
+    <script src="{% static 'chess.min.js'%}"></script>
+</head>
+<body>
+    <div id="board1" style="width: 400px"></div>
+    <br>
+    <p>Hello world</p>
+</body>
+    <script>
+        var config = {
+        position: 'start',
+        draggable: true
+        }
+        var board1 = ChessBoard('board1', config);
+    </script>
+>>>>>>> origin/main
 </html>
