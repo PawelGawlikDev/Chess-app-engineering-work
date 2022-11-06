@@ -5,18 +5,20 @@
     <title>Home page</title>
 </head>
 <body>
-    {% block title %}Home{% endblock %}
+    <p id="header">{% block title %}Home{% endblock %}</p>
     {% block content %}
     {% if user.is_authenticated %}
       Hi {{ user.username }}!
-      <p><a href="{% url 'logout' %}">Log Out</a></p>
-      <p><a href="{% url 'games' %}">Games</a></p>
-      <p><a href="{% url 'EditBoard' %}">Edit Board</a></p>
+      <p><a href="{% url 'logout' %}" id="logout-butt">Log Out</a></p>
+      <p><a href="{% url 'games' %}" id="games-butt">Games</a></p>
+      <p><a href="{% url 'EditBoard' %}" id="edti-butt">Edit Board</a></p>
+      <p><a href="{% url 'play' %}" id="play-butt">Play</a></p>
+      <p><a href="{% url 'game' %}" id="game-butt">Game</a></p>
     {% else %}
       <p>You are not logged in</p>
-      <a href="{% url 'login' %}">Log In</a>
+      <a href="{% url 'login' %}" id="login-butt">Log In</a>
       <p>You are not have account</p>
-      <a href="{% url 'signup' %}">Sign up</a>
+      <a href="{% url 'signup' %}" id="singUp-butt">Sign up</a>
     {% endif %}
     {% endblock %}
 </body>

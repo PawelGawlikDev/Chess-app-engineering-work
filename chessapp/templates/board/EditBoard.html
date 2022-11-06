@@ -1,42 +1,582 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    {% load static %}
-    <script src="{% static 'jquery.min.js'%}"></script>
-    <link rel="stylesheet" href="{% static 'stylesheets/style.css'%}" />
-    <link rel="stylesheet" href="{%static 'chessboardjs/css/chessboard-0.3.0.min.css'%}"/>
-    <script src="{% static 'chessboard-1.0.0.js'%}"></script>
-    <script src="{% static 'chessjs/chess.js'%}"></script>
-    <meta charset="UTF-8">
-    <title>Edit Board</title>
-</head>
-<body>
-    <div id="myBoard" style="width: 400px"></div>
-    <button id="startBtn">Start Position</button>
-    <button id="clearBtn">Clear Board</button>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="keywords" content="Chess, Chessboard, Javascript, Play Chess, Javascript Chess, three.js, chessboard.js, chessboard3.js">
+        <title>chessboard3.js</title>
+        {% load static %}
+        <link rel="stylesheet" type="text/css" media="screen" href="{% static 'chessboardjs/css/chessboard-0.3.0.css'%}" />
+        <script type="text/javascript" src="{% static 'js/jquery-2.1.3.min.js'%}"></script>
+        <script type="text/javascript" src="{% static 'chessboardjs/js/chessboard-0.3.0.js'%}"></script>
+        <script type="text/javascript" src="{% static 'lozza.js'%}"></script>
+        <script type="text/javascript" src="{% static 'js/chess.js'%}"></script>
+    </head>
+    <body>
 
-<div class="container">
-    <form method="POST">
-      <fieldset>
-        <legend>Form</legend>
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit" class="btn btn-primary">Submit</button>
-      </fieldset>
-    </form>
+<form role="form">
+<input class="form-control" id="fen" type="text" value="">
+</form>
+
+<p>
+<div class="btn-group" role="group">
+<button class="btn btn-warning" id="startpos">Reset</button>
+<button class="btn btn-warning" id="clearpos">Clear</button>
+</div>
+<div class="btn-group" role="group">
+<button class="btn btn-warning" data-toggle="tooltip" data-placement="top" title="toggle the turn (w/b) in the fen string" id="flipturn">Turn</button>
+<button class="btn btn-warning" data-toggle="tooltip" data-placement="top" title="this doers not affect the fen string" id="flippos">Flip</button>
+</div>
+</p>
+
+<p>
+<div class="btn-group" role="group">
+<button class="btn btn-primary" id="start">Analyse</button>
+<button class="btn btn-primary" id="stop">Stop</button>
+</div>
+<button class="btn btn-primary" id="eval">Evaluate</button>
+<button id="game">Game</button>
+<div class="btn-group">
+  <button type="button" class="btn btn-danger">Play</button>
+  <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+    <span class="caret"></span>
+    <span class="sr-only">Toggle Dropdown</span>
+  </button>
+  <ul class="dropdown-menu">
+    <li><a id="aswhite" href="#">As white</a></li>
+    <li><a id="asblack" href="#">As black</a></li>
+  </ul>
 </div>
 
+<p id="stats">
+</p>
+
+<p id="board" style="width: 400px"></p>
+<p id="info">
+</p>
+
+    <div class="container">
+        <form method="POST">
+          <fieldset>
+            <legend>Form</legend>
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-primary">Submit</button>
+          </fieldset>
+        </form>
+    </div>
 
 </body>
-    <script>
-var board = Chessboard('myBoard', {
-  pieceTheme: "{%static 'img/chesspieces/wikipedia/'%}" + "{piece}.png",
-  draggable: true,
-  dropOffBoard: 'trash',
-  sparePieces: true
-})
+<script>
 
-$('#startBtn').on('click', board.start)
-$('#clearBtn').on('click', board.clear)
-    </script>
+if (typeof console == "undefined") {
+  this.console = {log: function() {}};
+}
+
+var lozData = {};
+
+lozData.next     = 0; // next board id.
+lozData.hashFull = 0;
+lozData.mvNum    = 0;
+lozData.mvStr    = '';
+lozData.source   = "{% static 'lozza.js'%}";
+
+//{{{  Number.round
+
+Number.prototype.round = function (places) {
+
+  return +(Math.round(this + "e+" + places)  + "e-" + places);
+}
+
+//}}}
+//{{{  lozGetURLArgs
+
+function lozGetURLArgs() {
+
+  var url = location.href;
+  var qs  = url.substring(url.indexOf('?') + 1).split('&');
+
+  for(var i = 0, result = {}; i < qs.length; i++) {
+    qs[i]            = qs[i].split('=');
+    result[qs[i][0]] = decodeURIComponent(qs[i][1]);
+  }
+
+  return result;
+}
+
+//}}}
+//{{{  lozDecodeFEN
+
+function lozDecodeFEN (fen) {
+
+  fen = fen.replace(/\s+/g,' ');
+
+  var a = fen.split(' ');
+
+  var feno = {};
+
+  feno.board  = (a[0] == undefined) ? ''     : a[0];
+  feno.turn   = (a[1] == undefined) ? 'w'    : a[1];
+  feno.rights = (a[2] == undefined) ? 'KQkq' : a[2];
+  feno.ep     = (a[3] == undefined) ? '-'    : a[3];
+
+  return feno;
+}
+
+//}}}
+//{{{  lozEncodeFEN
+
+function lozEncodeFEN(feno) {
+
+  return feno.board + ' ' + feno.turn  + ' ' + feno.rights  + ' ' + feno.ep + ' 0 1';
+}
+
+//}}}
+//{{{  lozMakeURL
+
+function lozMakeURL(u) {
+
+  var url = lozData.page;
+  var sep = '?';
+
+  for (var a in u) {
+    if (typeof u[a] == 'undefined')
+      continue;
+    url += sep + a + '=' + u[a];
+    sep = '&';
+  }
+
+  return url;
+}
+
+//}}}
+
+//{{{  lozGetInt
+
+function lozGetInt (key, def) {
+
+  for (var i=0; i < lozData.tokens.length; i++)
+    if (lozData.tokens[i] == key)
+      return parseInt(lozData.tokens[i+1]);
+
+  return def;
+}
+
+//}}}
+//{{{  lozGetInt1
+
+function lozGetInt1 (key, def) {
+
+  for (var i=0; i < lozData.tokens.length; i++)
+    if (lozData.tokens[i] == key)
+      return parseInt(lozData.tokens[i+2]);
+
+  return def;
+}
+
+//}}}
+//{{{  lozGetStr
+
+function lozGetStr (key, def) {
+
+  for (var i=0; i < lozData.tokens.length; i++)
+    if (lozData.tokens[i] == key)
+      return lozData.tokens[i+1];
+
+  return def;
+}
+
+//}}}
+//{{{  lozGetStrToEnd
+
+function lozGetStrToEnd (key, def) {
+
+  for (var i=0; i < lozData.tokens.length; i++) {
+    if (lozData.tokens[i] == key) {
+      var val = '';
+      for (var j=i+1; j < lozData.tokens.length; j++)
+        val += lozData.tokens[j] + ' ';
+      return val;
+    }
+  }
+
+  return def;
+}
+
+//}}}
+//{{{  lozStandardRx
+
+function lozStandardRx (e) {
+
+  //console.log(e.data);
+
+  lozData.message = e.data;
+  lozData.message = lozData.message.trim();
+  lozData.message = lozData.message.replace(/\s+/g,' ');
+  lozData.tokens  = lozData.message.split(' ');
+
+  //{{{  bestmove
+
+  if (lozData.tokens[0] == 'bestmove') {
+
+    lozUpdateStats();
+
+    //console.log(lozData);
+
+    lozData.bm   = lozGetStr('bestmove','');
+    lozData.bmFr = lozData.bm[0] + lozData.bm[1];
+    lozData.bmTo = lozData.bm[2] + lozData.bm[3];
+    if (lozData.bm.length > 4)
+      lozData.bmPr = lozData.bm[4];
+    else
+      lozData.bmPr = '';
+
+    lozUpdateBestMove();
+  }
+
+  //}}}
+  //{{{  option
+
+  else if (lozData.tokens[0] == 'option') {
+    ;
+  }
+
+  //}}}
+  //{{{  info string debug
+
+  else if (lozData.tokens[0] == 'info' && lozData.tokens[1] == 'string' && lozData.tokens[2] == 'debug') {
+
+    lozData.info = '<b>' + lozData.message.replace(/info string debug /,'') + '</b>';
+
+    lozUpdateInfo();
+  }
+
+  //}}}
+  //{{{  info string
+
+  else if (lozData.tokens[0] == 'info' && lozData.tokens[1] == 'string') {
+
+    lozData.info = lozData.message.replace(/info string /,'');
+
+    lozUpdateInfo();
+  }
+
+  //}}}
+  //{{{  info
+
+
+  else if (lozData.tokens[0] == 'info') {
+
+    var pv    = lozData.pv;
+    var score = lozData.score;
+    var units = lozData.units;
+    var depth = lozData.depth;
+
+    lozData.mvStr    = lozGetStr('currmove',lozData.mvStr);
+    lozData.mvNum    = lozGetInt('currmovenumber',lozData.mvNum);
+    lozData.depth    = lozGetInt('depth',lozData.depth);
+    lozData.selDepth = lozGetInt('seldepth',lozData.seldepth);
+    lozData.units    = lozGetStr('score',lozData.units);
+    lozData.score    = lozGetInt1('score',lozData.score);
+    lozData.pv       = lozGetStrToEnd('pv',lozData.pv);
+    lozData.nodes    = lozGetInt('nodes',lozData.nodes);
+    lozData.time     = lozGetInt('time',lozData.time);
+    lozData.nps      = lozGetInt('nps',lozData.nps);
+    lozData.hashFull = lozGetInt('hashfull',lozData.hashFull);
+
+    lozData.seconds   = (lozData.time/1000).round(2);
+    lozData.meganodes = (lozData.nodes/1000000).round(2);
+    lozData.mnps      = (lozData.nps/1000000).round(2);
+    lozData.kilonodes = (lozData.nodes/1000).round(2);
+    lozData.knps      = (lozData.nps/1000).round(2);
+
+    lozUpdateStats();
+
+    if (pv != lozData.pv || score != lozData.score || units != lozData.units || depth != lozData.depth)
+      lozUpdatePV();
+  }
+
+  //}}}
+  //{{{  board
+
+  else if (lozData.tokens[0] == 'board') {
+
+    lozData.board = lozGetStr('board','');
+
+    lozUpdateBoard();
+  }
+
+  //}}}
+  //{{{  everything else
+
+  else {
+
+    lozData.info = lozData.message;
+
+    lozUpdateInfo();
+  }
+
+  //}}}
+}
+
+//}}}
+//{{{  lozUpdateBestMove
+
+function lozUpdateBestMove () {
+
+}
+
+//}}}
+//{{{  lozUpdateStats
+
+function lozUpdateStats () {
+
+  if (lozData.mvNum && lozData.mvStr)
+    var move = ' | ' + lozData.mvNum + '/' + lozData.mvStr;
+  else
+    var move = '';
+
+  if (lozData.hashFull)
+    var hash = ' | ' + lozData.hashFull/10 + '%';
+  else
+    var hash = '';
+
+  $(lozData.idStats).html(lozData.seconds + ' s | ' + lozData.kilonodes + ' kn | ' + lozData.knps + ' kn/s' + move + hash);
+}
+
+//}}}
+//{{{  lozUpdatePV
+
+function lozUpdatePV () {
+
+  if (lozData.selDepth)
+    var d = lozData.depth + '/' + lozData.selDepth;
+  else
+    var d = lozData.depth;
+
+  $(lozData.idInfo).prepend(lozData.seconds + ' ' + d + ' (' + lozData.score + lozData.units + ') ' + lozData.pv + '<br>');
+}
+
+//}}}
+//{{{  lozUpdateInfo
+
+function lozUpdateInfo () {
+
+  $(lozData.idInfo).prepend(lozData.info + '<br>');
+}
+
+//}}}
+//{{{  lozUpdateBoard
+
+function lozUpdateBoard () {
+
+  var id = 'board' + lozData.next++;
+
+  $(lozData.idInfo).prepend('<div style="width: 250px;" id="' + id + '"><div>');
+
+  var cb = new ChessBoard(id, {
+    showNotation : true,
+    draggable    : true,
+    dropOffBoard : 'snapback',
+    position     : lozData.tokens[1]
+  });
+
+}
+
+//}}}
+</script>
+<script>
+
+var FENBUILD = 'a1.10';
+
+var args    = lozGetURLArgs();
+var uiBoard = null;
+var engine  = null;
+
+lozData.page    = 'fen.htm';
+lozData.idInfo  = '#info';
+lozData.idStats = '#stats';
+
+//{{{  updateBoardFromFen
+
+function updateBoardFromFen () {
+  var fen = $('#fen').val().trim();
+  uiBoard.position(fen);
+};
+
+//}}}
+//{{{  updateFenFromBoard
+
+function updateFenFromBoard () {
+  var turn = lozDecodeFEN($('#fen').val()).turn;
+  var fen = uiBoard.fen();
+  var pos = uiBoard.position();
+  var rights = '';
+  if (pos.e1 == 'wK' && pos.h1 == 'wR')
+    rights += 'K';
+  if (pos.e1 == 'wK' && pos.a1 == 'wR')
+    rights += 'Q';
+  if (pos.e8 == 'bK' && pos.h8 == 'bR')
+    rights += 'k';
+  if (pos.e8 == 'bK' && pos.h8 == 'bR')
+    rights += 'q';
+  if (!rights)
+    rights = '-';
+  $('#fen').val(fen + ' ' + turn + ' ' + rights + ' - 0 1');
+};
+
+
+//}}}
+//{{{  onDrop
+
+var onDrop = function(source, target, piece, newPos, oldPos, orientation) {
+  uiBoard.position(newPos);
+  updateFenFromBoard();
+};
+
+
+//}}}
+//{{{  eval
+
+function eval() {
+  if (engine)
+    engine.terminate();
+  engine           = new Worker(lozData.source);
+  engine.onmessage = lozStandardRx;
+  $(lozData.idInfo).html('');
+  var fen = $('#fen').val().trim();
+  engine.postMessage('ucinewgame');
+  if (fen)
+    engine.postMessage('position fen ' + fen);
+  else
+    engine.postMessage('position startpos');
+  engine.postMessage('eval');
+}
+
+//}}}
+//{{{  anal
+
+function anal() {
+  if (engine)
+    engine.terminate();
+  engine           = new Worker(lozData.source);
+  engine.onmessage = lozStandardRx;
+  $(lozData.idInfo).html('');
+  var fen = $('#fen').val().trim();
+  engine.postMessage('ucinewgame');
+  if (fen)
+    engine.postMessage('position fen ' + fen);
+  else
+    engine.postMessage('position startpos');
+  engine.postMessage('go depth 99');
+}
+
+//}}}
+
+$(function() {
+
+  //{{{  init DOM
+  //}}}
+  //{{{  handlers
+
+  $('#aswhite').click(function() {
+    window.open("{% url 'play' %}?c=w&fen=" + $('#fen').val().trim(),'_blank');
+    return true;
+  });
+
+  $('#asblack').click(function() {
+    window.open("{% url 'play' %}?c=b&fen=" + $('#fen').val().trim(),'_blank');
+    return true;
+  });
+
+  $('#game').click(function() {
+    window.open("{% url 'game' %}?c=w&fen=" + $('#fen').val().trim(),'_blank');
+    return true;
+  });
+
+  $('#startpos').click(function() {
+    $(lozData.idInfo).html('');
+    uiBoard.start();
+    updateFenFromBoard();
+    return false;
+  });
+
+  $('#clearpos').click(function() {
+    $(lozData.idInfo).html('');
+    uiBoard.position('4k3/8/8/8/8/8/8/4K3');
+    updateFenFromBoard();
+    return false;
+  });
+
+  $('#flippos').click(function() {
+    uiBoard.orientation('flip');
+    return false;
+  });
+
+  $('#flipturn').click(function() {
+    var feno = lozDecodeFEN($('#fen').val());
+    if (feno.turn == 'w')
+      feno.turn = 'b';
+    else
+      feno.turn = 'w';
+    $('#fen').val(lozEncodeFEN(feno));
+    return false;
+  });
+
+  $('#fen').blur(function() {
+    updateBoardFromFen();
+    return false;
+  });
+
+  $('#start').click(function() {
+    anal();
+    return false;
+  });
+
+  $('#stop').click(function() {
+    engine.terminate();
+    engine = null;
+    return false;
+  });
+
+  $('#eval').click(function() {
+    eval();
+    return false;
+  });
+
+  //}}}
+
+  uiBoard = new ChessBoard('board', {
+    pieceTheme: "{%static 'img/chesspieces/wikipedia/'%}" + "{piece}.png",
+    showNotation : true,
+    draggable    : true,
+    dropOffBoard : 'trash',
+    sparePieces  : true,
+    onDrop       : onDrop,
+    position     : 'start'
+  });
+
+  if (args.fen) {
+    $('#fen').val(args.fen)
+    updateBoardFromFen();
+  }
+  else
+    updateFenFromBoard();
+
+
+  if (args.act == 'eva')
+    eval();
+  else if (args.act == 'ana')
+    anal();
+  else {
+    if (engine)
+      engine.terminate();
+    engine           = new Worker(lozData.source);
+    engine.onmessage = lozStandardRx;
+    $(lozData.idInfo).html('');
+    //$(lozData.idInfo).prepend('Version ' + BUILD + ' ' + FENBUILD + '<br>');
+    //engine.postMessage('uci');
+  }
+
+});
+</script>
 </html>

@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     {% load static %}
-<<<<<<< HEAD
     <script src="{% static 'jquery.min.js'%}"></script>
     <link href='http://fonts.googleapis.com/css?family=Roboto:400,700,400italic,700italic|Roboto+Slab:400,700' rel='stylesheet' type='text/css'>
     <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.1/css/font-awesome.css" rel="stylesheet">
@@ -11,8 +10,9 @@
     <link rel="stylesheet" href="{% static 'stylesheets/style.css'%}" />
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
     <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+    <script src="{% static 'chessboardjs/js/chessboard-0.3.0.js'%}"></script>
+    <script src="{% static 'js/chess.js'%}"></script>
 </head>
-  <body>
     <div class="container">
       <div class="page-header">
       </div>
@@ -30,8 +30,6 @@
         </div>
       </div>
     </div>
-    <script src="{% static 'chessboardjs/js/chessboard-0.3.0.js'%}"></script>
-    <script src="{% static 'chessjs/chess.js'%}"></script>
     <script >
 
 pgnData = [
@@ -209,26 +207,5 @@ $(document).ready(function() {
     loadGame(0);
     goToMove(gameHistory.length - 1);
 });
-
-    </script>
-  </body>
-=======
-    <link rel="stylesheet" type="text/css" href="{% static 'chessboard.min.css'%}">
-    <script src="{% static 'jquery.min.js'%}"></script>
-    <script src="{% static 'chessboard.min.js'%}"></script> <!-- W static/chessboardjs jest zdefiniwana ścieżka do zdjęć figur a po odpaleniu podstrony dodwana jest do tego jeszcze ścieżka z urls.py   -->
-    <script src="{% static 'chess.min.js'%}"></script>
-</head>
-<body>
-    <div id="board1" style="width: 400px"></div>
-    <br>
-    <p>Hello world</p>
-</body>
-    <script>
-        var config = {
-        position: 'start',
-        draggable: true
-        }
-        var board1 = ChessBoard('board1', config);
-    </script>
->>>>>>> origin/main
+</script>
 </html>

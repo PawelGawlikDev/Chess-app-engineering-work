@@ -11,4 +11,4 @@ class GameForm(forms.ModelForm):
     class Meta:
         model = Partie
         fields = ["user", "nazwa", "PGN", "FEN"]
-        labels = {'nazwa': "Nazwa", "PGN": "PGN", "FEN": "Pozycja"}
+        labels = {'nazwa': "Nazwa", "PGN": "PGN", "FEN": "FEN"}
