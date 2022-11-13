@@ -25,7 +25,7 @@ urlpatterns = [
                   path('', TemplateView.as_view(template_name='home.html'), name='home'),
                   path('partie/', index, name='games'),
                   path('partie/user/<id>/', partie, name='board'),
-                  path('edit/', AddPostView.as_view(model=Partie, success_url="/edit/"), name='EditBoard'),
+                  path('edit/', TemplateView.as_view(template_name='EditBoard.html'), name='EditBoard'),
                   path('play/', TemplateView.as_view(template_name='play.html'), name='play'),
-                  path('game/', TemplateView.as_view(template_name='game.html'), name='game'),
+                  path('game/', AddPostView.as_view(model=Partie, success_url="/partie/"), name='game'),
               ]

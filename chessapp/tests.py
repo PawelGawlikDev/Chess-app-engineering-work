@@ -1,18 +1,28 @@
 import time
+from django.contrib.auth.models import User
+from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.test import LiveServerTestCase
-from django.core.management import call_command
+from chessapp.models import Partie
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
-from chess import settings
+
+USERNAME = "admin"
+PASSWORD = "admin"
+NAZWA = "Patria Testowa"
+PGN = "1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. Ng5 Bc5"
+FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
 
-class ChessAppTests(LiveServerTestCase):
-
+class ChessAppTests(StaticLiveServerTestCase):
 
     def setUp(self):
         self.driver = webdriver.Chrome()
         self.driver.maximize_window()
+        self.admin = User.objects.create_superuser(username=USERNAME,
+                                                   email=None,
+                                                   password=PASSWORD)
+        self.games = Partie.objects.create(nazwa=NAZWA, PGN=PGN)
 
     def tearDown(self):
         self.driver.close()
@@ -51,7 +61,8 @@ class ChessAppTests(LiveServerTestCase):
         LogInButton = driver.find_element(By.ID, 'log-in-button')
         LogInButton.click()
         time.sleep(5)
-        self.assertEqual(self.driver.current_url, self.live_server_url, msg="Log in should pass")
+        header = driver.find_element(By.ID, "welcome-text").text
+        self.assertEqual(header, "Hi admin!", msg="Header don't show up")
 
 
 if __name__ == '__main__':

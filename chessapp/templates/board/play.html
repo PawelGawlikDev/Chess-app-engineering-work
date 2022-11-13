@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Play chess</title>
+
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'Css/play.css'%}">
+    <link rel="stylesheet" type="text/css" media="screen" href="{% static 'chessboardjs/css/chessboard-0.3.0.css'%}" />
+    <script type="text/javascript" src="{% static 'js/jquery-2.1.3.min.js'%}"></script>
+    <script type="text/javascript" src="{% static 'chessboardjs/js/chessboard-0.3.0.js'%}"></script>
+    <script type="text/javascript" src="{% static 'lozza.js'%}"></script>
+    <script type="text/javascript" src="{% static 'js/chess.js'%}"></script>
+  </head>
+
+<body>
+
+<p>
+
+<a id="analyse" class="btn btn-danger" href="">Analyse</a>
+
+<!--<div class="btn-group">-->
+<!--  <button id="strength" type="button" class="btn btn-primary">Strength</button>-->
+<!--  <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">-->
+<!--    <span class="caret"></span>-->
+<!--    <span class="sr-only">Toggle Dropdown</span>-->
+<!--  </button>-->
+<!--  <ul class="dropdown-menu">-->
+<!--    <li><a id="level1"  href="#">Level 1</a></li>-->
+<!--    <li><a id="level2"  href="#">Level 2</a></li>-->
+<!--    <li><a id="level3"  href="#">Level 3</a></li>-->
+<!--    <li><a id="level4"  href="#">Level 4</a></li>-->
+<!--    <li class="divider"></li>-->
+<!--    <li><a id="level5"  href="#">Level 5</a></li>-->
+<!--    <li><a id="level6"  href="#">Level 6</a></li>-->
+<!--    <li><a id="level7"  href="#">Level 7</a></li>-->
+<!--    <li><a id="level8"  href="#">Level 8</a></li>-->
+<!--    <li class="divider"></li>-->
+<!--    <li><a id="level9"  href="#">Level 9</a></li>-->
+<!--    <li><a id="level10" href="#">Beth</a></li>-->
+<!--  </ul>-->
+<!--</div>-->
+
+<!--<p id="stats"></p>-->
+
+<p id="board" style="width: 400px"></p>
+<p>PGN: </p>
+<p id="moves"></p>
+<p id="info"></p>
+
+</body>
+<script>
+
+var lozData = {};
+
+lozData.next     = 0; // next board id.
+lozData.hashFull = 0;
+lozData.mvNum    = 0;
+lozData.mvStr    = '';
+lozData.source   = "{% static 'lozza.js'%}";
+
+//{{{  Number.round
+
+Number.prototype.round = function (places) {
+
+  return +(Math.round(this + "e+" + places)  + "e-" + places);
+}
+
+//}}}
+//{{{  lozGetURLArgs
+
+function lozGetURLArgs() {
+
+  var url = location.href;
+  var qs  = url.substring(url.indexOf('?') + 1).split('&');
+
+  for(var i = 0, result = {}; i < qs.length; i++) {
+    qs[i]            = qs[i].split('=');
+    result[qs[i][0]] = decodeURIComponent(qs[i][1]);
+  }
+
+  return result;
+}
+
+//}}}
+//{{{  lozDecodeFEN
+
+function lozDecodeFEN (fen) {
+
+  fen = fen.replace(/\s+/g,' ');
+
+  var a = fen.split(' ');
+
+  var feno = {};
+
+  feno.board  = (a[0] == undefined) ? ''     : a[0];
+  feno.turn   = (a[1] == undefined) ? 'w'    : a[1];
+  feno.rights = (a[2] == undefined) ? 'KQkq' : a[2];
+  feno.ep     = (a[3] == undefined) ? '-'    : a[3];
+
+  return feno;
+}
+
+//}}}
+//{{{  lozEncodeFEN
+
+function lozEncodeFEN(feno) {
+
+  return feno.board + ' ' + feno.turn  + ' ' + feno.rights  + ' ' + feno.ep + ' 0 1';
+}
+
+//}}}
+//{{{  lozMakeURL
+
+function lozMakeURL(u) {
+
+  var url = lozData.page;
+  var sep = '?';
+
+  for (var a in u) {
+    if (typeof u[a] == 'undefined')
+      continue;
+    url += sep + a + '=' + u[a];
+    sep = '&';
+  }
+
+  return url;
+}
+
+//}}}
+
+//{{{  lozGetInt
+
+function lozGetInt (key, def) {
+
+  for (var i=0; i < lozData.tokens.length; i++)
+    if (lozData.tokens[i] == key)
+      return parseInt(lozData.tokens[i+1]);
+
+  return def;
+}
+
+//}}}
+//{{{  lozGetInt1
+
+function lozGetInt1 (key, def) {
+
+  for (var i=0; i < lozData.tokens.length; i++)
+    if (lozData.tokens[i] == key)
+      return parseInt(lozData.tokens[i+2]);
+
+  return def;
+}
+
+//}}}
+//{{{  lozGetStr
+
+function lozGetStr (key, def) {
+
+  for (var i=0; i < lozData.tokens.length; i++)
+    if (lozData.tokens[i] == key)
+      return lozData.tokens[i+1];
+
+  return def;
+}
+
+//}}}
+//{{{  lozGetStrToEnd
+
+function lozGetStrToEnd (key, def) {
+
+  for (var i=0; i < lozData.tokens.length; i++) {
+    if (lozData.tokens[i] == key) {
+      var val = '';
+      for (var j=i+1; j < lozData.tokens.length; j++)
+        val += lozData.tokens[j] + ' ';
+      return val;
+    }
+  }
+
+  return def;
+}
+
+//}}}
+//{{{  lozStandardRx
+
+function lozStandardRx (e) {
+
+  //console.log(e.data);
+
+  lozData.message = e.data;
+  lozData.message = lozData.message.trim();
+  lozData.message = lozData.message.replace(/\s+/g,' ');
+  lozData.tokens  = lozData.message.split(' ');
+
+  //{{{  bestmove
+
+  if (lozData.tokens[0] == 'bestmove') {
+
+    lozUpdateStats();
+
+    //console.log(lozData);
+
+    lozData.bm   = lozGetStr('bestmove','');
+    lozData.bmFr = lozData.bm[0] + lozData.bm[1];
+    lozData.bmTo = lozData.bm[2] + lozData.bm[3];
+    if (lozData.bm.length > 4)
+      lozData.bmPr = lozData.bm[4];
+    else
+      lozData.bmPr = '';
+
+    lozUpdateBestMove();
+  }
+
+  //}}}
+  //{{{  option
+
+  else if (lozData.tokens[0] == 'option') {
+    ;
+  }
+
+  //}}}
+  //{{{  info string debug
+
+  else if (lozData.tokens[0] == 'info' && lozData.tokens[1] == 'string' && lozData.tokens[2] == 'debug') {
+
+    lozData.info = '<b>' + lozData.message.replace(/info string debug /,'') + '</b>';
+
+    lozUpdateInfo();
+  }
+
+  //}}}
+  //{{{  info string
+
+  else if (lozData.tokens[0] == 'info' && lozData.tokens[1] == 'string') {
+
+    lozData.info = lozData.message.replace(/info string /,'');
+
+    lozUpdateInfo();
+  }
+
+  //}}}
+  //{{{  info
+
+
+  else if (lozData.tokens[0] == 'info') {
+
+    var pv    = lozData.pv;
+    var score = lozData.score;
+    var units = lozData.units;
+    var depth = lozData.depth;
+
+    lozData.mvStr    = lozGetStr('currmove',lozData.mvStr);
+    lozData.mvNum    = lozGetInt('currmovenumber',lozData.mvNum);
+    lozData.depth    = lozGetInt('depth',lozData.depth);
+    lozData.selDepth = lozGetInt('seldepth',lozData.seldepth);
+    lozData.units    = lozGetStr('score',lozData.units);
+    lozData.score    = lozGetInt1('score',lozData.score);
+    lozData.pv       = lozGetStrToEnd('pv',lozData.pv);
+    lozData.nodes    = lozGetInt('nodes',lozData.nodes);
+    lozData.time     = lozGetInt('time',lozData.time);
+    lozData.nps      = lozGetInt('nps',lozData.nps);
+    lozData.hashFull = lozGetInt('hashfull',lozData.hashFull);
+
+    lozData.seconds   = (lozData.time/1000).round(2);
+    lozData.meganodes = (lozData.nodes/1000000).round(2);
+    lozData.mnps      = (lozData.nps/1000000).round(2);
+    lozData.kilonodes = (lozData.nodes/1000).round(2);
+    lozData.knps      = (lozData.nps/1000).round(2);
+
+    lozUpdateStats();
+
+    if (pv != lozData.pv || score != lozData.score || units != lozData.units || depth != lozData.depth)
+      lozUpdatePV();
+  }
+
+  //}}}
+  //{{{  board
+
+  else if (lozData.tokens[0] == 'board') {
+
+    lozData.board = lozGetStr('board','');
+
+    lozUpdateBoard();
+  }
+
+  //}}}
+  //{{{  everything else
+
+  else {
+
+    lozData.info = lozData.message;
+
+    lozUpdateInfo();
+  }
+
+  //}}}
+}
+
+//}}}
+//{{{  lozUpdateBestMove
+
+function lozUpdateBestMove () {
+
+}
+
+//}}}
+//{{{  lozUpdateStats
+
+function lozUpdateStats () {
+
+  if (lozData.mvNum && lozData.mvStr)
+    var move = ' | ' + lozData.mvNum + '/' + lozData.mvStr;
+  else
+    var move = '';
+
+  if (lozData.hashFull)
+    var hash = ' | ' + lozData.hashFull/10 + '%';
+  else
+    var hash = '';
+
+  $(lozData.idStats).html(lozData.seconds + ' s | ' + lozData.kilonodes + ' kn | ' + lozData.knps + ' kn/s' + move + hash);
+}
+
+//}}}
+//{{{  lozUpdatePV
+
+function lozUpdatePV () {
+
+  if (lozData.selDepth)
+    var d = lozData.depth + '/' + lozData.selDepth;
+  else
+    var d = lozData.depth;
+
+  $(lozData.idInfo).prepend(lozData.seconds + ' ' + d + ' (' + lozData.score + lozData.units + ') ' + lozData.pv + '<br>');
+}
+
+//}}}
+//{{{  lozUpdateInfo
+
+function lozUpdateInfo () {
+
+  $(lozData.idInfo).prepend(lozData.info + '<br>');
+}
+
+//}}}
+//{{{  lozUpdateBoard
+
+function lozUpdateBoard () {
+
+  var id = 'board' + lozData.next++;
+
+  $(lozData.idInfo).prepend('<div style="width: 250px;" id="' + id + '"><div>');
+
+  var cb = new ChessBoard(id, {
+    showNotation : true,
+    draggable    : true,
+    dropOffBoard : 'snapback',
+    position     : lozData.tokens[1]
+  });
+
+}
+
+//}}}
+</script>
+<script>
+
+
+var PLAYBUILD = 'p1.10';
+
+var args        = lozGetURLArgs();
+var board       = null;
+var chess       = null;
+var drag        = true;
+var engine      = null;
+var startFrom   = 'startpos';
+var startFromUI = 'start';
+var level       = 1;
+
+lozData.page    = 'templates/board/play.htm';
+lozData.idInfo  = '#info';
+lozData.idStats = '#stats';
+
+//{{{  lozUpdateBestMove
+
+function lozUpdateBestMove () {
+
+  var move = {};
+
+  move.from = lozData.bmFr;
+  move.to   = lozData.bmTo;
+
+  if (lozData.bmPr) {
+    move.promotion = lozData.bmPr;
+  }
+
+  chess.move(move);
+  board.position(chess.fen());
+  $('#moves').html(chess.pgn({newline_char: '<br>'}));
+
+  if (!chess.game_over())
+    drag = true;
+  else
+    showEnd();
+}
+
+//}}}
+//{{{  lozUpdatePV
+
+function lozUpdatePV () {
+
+  //if (lozData.units == 'cp')
+    //$(lozData.idInfo).prepend('depth ' + lozData.depth + ' (' + lozData.score + ') ' + lozData.pv + '<br>');
+  if (lozData.score > 0 && lozData.units != 'cp')
+    $(lozData.idInfo).prepend('depth ' + lozData.depth + ' (<b>mate in ' + lozData.score + '</b>) ' + lozData.pv + '<br>');
+  else if (lozData.units != 'cp')
+    $(lozData.idInfo).prepend('depth ' + lozData.depth + ' (<b>checkmate</b>) ' + lozData.pv + '<br>');
+
+}
+
+//}}}
+//{{{  onDrop
+
+var onDrop = function(source, target, piece, newPos, oldPos, orientation) {
+
+  if (target == 'offboard' || target == source) {
+    //console.log('offboard');
+    return;
+  }
+
+  var move = chess.move({from: source, to: target, promotion: 'q'})
+  if (!move) {
+    //console.log('invalid');
+    return 'snapback';
+  }
+
+  if (move.flags == 'e' || move.flags == 'p' || move.flags == 'k' || move.flags == 'q')
+    board.position(chess.fen());
+
+  var pgn = chess.pgn({newline_char: '<br>'});
+  $('#moves').html(pgn);
+
+  drag = false;
+
+  if (!chess.game_over()) {
+    $(lozData.idInfo).html('');
+    engine.postMessage('position ' + startFrom + ' moves ' + strMoves());
+    postGo();
+  }
+  else
+    showEnd();
+};
+
+//}}}
+//{{{  onDragStart
+
+var onDragStart = function(source, piece, position, orientation) {
+
+  if ((!drag || orientation === 'white' && piece.search(/^w/) === -1) || (orientation === 'black' && piece.search(/^b/) === -1)) {
+    return false;
+  }
+
+  return true;
+};
+
+//}}}
+//{{{  strMoves
+
+function strMoves() {
+
+  var movesStr = '';
+  var moves    = chess.history({verbose: true});
+
+  for (var i=0; i < moves.length; i++) {
+    if (i)
+      movesStr += ' ';
+    var move = moves[i];
+    movesStr += move.from + move.to;
+    if (move.promotion)
+      movesStr += move.promotion;
+  }
+
+  return movesStr;
+}
+
+//}}}
+//{{{  showEnd
+
+function showEnd () {
+
+  if (chess.in_checkmate())
+    $(lozData.idInfo).html('Checkmate');
+  else if (chess.insufficient_material())
+    $(lozData.idInfo).html('Draw due to insufficient material');
+  else if (chess.in_draw())
+    $(lozData.idInfo).html('Draw by 50 move rule');
+  else if (chess.in_stalemate())
+    $(lozData.idInfo).html('Draw by stalemate');
+  else if (chess.in_threefold_repetition())
+    $(lozData.idInfo).html('Draw by threefold repetition');
+  else
+    $(lozData.idInfo).html('Game over but not sure why!');
+}
+
+//}}}
+//{{{  getLevel
+
+function getLevel () {
+
+  level = parseInt(args.l);
+  if (level <= 0)
+    level = 1;
+  if (level > 10)
+    level = 10;
+}
+
+//}}}
+//{{{  postGo
+
+function postGo () {
+
+  var go = '';
+
+  if (level < 1)
+    level = 1;
+
+  if (args.m)
+    go = args.m;
+
+  else if (level <= 8) {
+    go = 'go depth ' + level;
+  }
+  else if (level == 9)
+      go = 'go movetime 2000';
+
+  else if (level >= 10)
+      go = 'go movetime 10000';
+
+  $('#strength').html('Strength (' + level + ')'); //jic
+  engine.postMessage('debug off')
+  engine.postMessage(go);
+}
+
+//}}}
+
+$(function() {
+
+  //{{{  init DOM
+
+  if (args.l) {
+    getLevel();
+  }
+
+  //}}}
+  //{{{  handlers
+
+  $('#playw').click(function() {
+
+    window.location = lozMakeURL ({
+      l : level
+    });
+
+    return true;
+  });
+
+  $('#playb').click(function() {
+
+    window.location = lozMakeURL ({
+      l : level,
+      c : 'b'
+    });
+
+    return true;
+  });
+
+  $('#level1').click(function() {
+    level=1;
+    $('#strength').html('Strength (1)');
+    return true;
+  });
+  $('#level2').click(function() {
+    level=2;
+    $('#strength').html('Strength (2)');
+    return true;
+  });
+
+  $('#level3').click(function() {
+    level=3;
+    $('#strength').html('Strength (3)');
+    return true;
+  });
+
+  $('#level4').click(function() {
+    level=4;
+    $('#strength').html('Strength (4)');
+    return true;
+  });
+
+  $('#level5').click(function() {
+    level=5;
+    $('#strength').html('Strength (5)');
+    return true;
+  });
+
+  $('#level6').click(function() {
+    level=6;
+    $('#strength').html('Strength (6)');
+    return true;
+  });
+
+  $('#level7').click(function() {
+    level=7;
+    $('#strength').html('Strength (7)');
+    return true;
+  });
+
+  $('#level8').click(function() {
+    level=8;
+    $('#strength').html('Strength (8)');
+    return true;
+  });
+
+  $('#level9').click(function() {
+    level=9;
+    $('#strength').html('Strength (9)');
+    return true;
+  });
+
+  $('#level10').click(function() {
+    level=10;
+    $('#strength').html('Strength (10)');
+    return true;
+  });
+
+  $('#analyse').click(function() {
+
+    window.open("{% url 'EditBoard' %}?fen=" + chess.fen(),"_blank");
+
+    return false;
+  });
+
+
+  //}}}
+
+  engine           = new Worker(lozData.source);
+  engine.onmessage = lozStandardRx;
+
+  if (args.fen) {
+    startFrom   = 'fen ' + args.fen;
+    startFromUI = args.fen;
+    chess = new Chess(args.fen);
+    $("#playw").hide();
+    $("#playb").hide();
+  }
+  else
+    chess = new Chess();
+
+  board = new ChessBoard('board', {
+    pieceTheme: "{%static 'img/chesspieces/wikipedia/'%}" + "{piece}.png",
+    showNotation : true,
+    draggable    : true,
+    dropOffBoard : 'snapback',
+    onDrop       : onDrop,
+    onDragStart  : onDragStart,
+    position     : startFromUI
+  });
+
+  //$(lozData.idInfo).prepend('Version ' + BUILD + ' ' + PLAYBUILD + '<br>');
+  //engine.postMessage('uci')
+  engine.postMessage('ucinewgame')
+  engine.postMessage('debug off')
+
+  if (!args.fen && args.c == 'b' || args.fen && args.fen.search(' w') !== -1 && args.c == 'b') {
+    board.orientation('black');
+    engine.postMessage('position ' + startFrom);
+    postGo();
+    $(lozData.idInfo).prepend('You are black' + '<br>');
+  }
+  else if (!args.fen && args.c != 'b' || args.fen && args.fen.search(' w') !== -1 && args.c != 'b') {
+    board.orientation('white');
+    $(lozData.idInfo).prepend('Your move with white pieces' + '<br>');
+  }
+  else if (args.fen && args.fen.search(' b') !== -1 && args.c == 'b') {
+    board.orientation('black');
+    $(lozData.idInfo).prepend('Your move with black pieces' + '<br>');
+  }
+  else if (args.fen && args.fen.search(' b') !== -1 && args.c != 'b') {
+    board.orientation('white');
+    engine.postMessage('position ' + startFrom);
+    postGo();
+    $(lozData.idInfo).prepend('You are white' + '<br>');
+  }
+  else {
+    $(lozData.idInfo).prepend('INCONSISTENT ARGS' + '<br>');
+  }
+  //$(lozData.idInfo).prepend('Level ' + level + '<br>');
+  $('#strength').html('Strength (' + level + ')');
+
+  //console.log(args);
+
+});
+
+</script>
+</html>

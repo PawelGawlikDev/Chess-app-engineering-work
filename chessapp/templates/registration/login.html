@@ -1,18 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'Css/login.css'%}">
+    <script type="text/javascript" src="{% static 'js/jquery-2.1.3.min.js'%}"></script>
     <meta charset="UTF-8">
     <title>Login Page</title>
 </head>
 <body>
-    {% block title %}Login{% endblock %}
     {% block content %}
+<div class="login-form">
     <h2>Log In</h2>
+    <div class="content">
     <form method="post">
       {% csrf_token %}
       {{ form.as_p }}
       <button type="submit" id="log-in-button">Log In</button>
     </form>
-{% endblock %}
+     </div>
+    {% endblock %}
+</div>
+<script>
+</script>
 </body>
 </html>

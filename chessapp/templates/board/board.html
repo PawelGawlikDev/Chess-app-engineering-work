@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     {% load static %}
+    <link rel="stylesheet" href="{% static 'Css/board.css'%}">
     <script src="{% static 'jquery.min.js'%}"></script>
     <link href='http://fonts.googleapis.com/css?family=Roboto:400,700,400italic,700italic|Roboto+Slab:400,700' rel='stylesheet' type='text/css'>
     <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.1/css/font-awesome.css" rel="stylesheet">
@@ -164,6 +165,7 @@ var onChange = function onChange() { //fires when the board position changes
 
 function loadGame(i) {
   game = new Chess();
+  game.load('{{partie_user.FEN}}')
   game.load_pgn(pgnData[i].join('\n'), {newline_char:'\n'});
   writeGameText(game);
   gameHistory = game.history({verbose: true});
@@ -185,6 +187,7 @@ $(document).ready(function() {
     //read all the games to populate the select
     for (var i = 0; i < pgnData.length; i++) {
         var g = new Chess();
+        g.load('{{partie_user.FEN}}')
         g.load_pgn(pgnData[i].join('\n'), {newline_char:'\n'});
         var h = g.header();
         $('#gameSelect')

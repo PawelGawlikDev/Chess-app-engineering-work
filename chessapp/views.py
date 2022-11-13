@@ -23,7 +23,7 @@ class AddPostView(LoginRequiredMixin, CreateView):
 
     model = Partie
     form_class = GameForm
-    template_name = 'board/EditBoard.html'
+    template_name = 'board/Game.html'
 
     def game_form(self, request):
         if request.method == "POST":
@@ -32,7 +32,7 @@ class AddPostView(LoginRequiredMixin, CreateView):
                 form.save()
         else:
             form = GameForm()
-            return render(request, "board/EditBoard.html", {'form': form})
+            return render(request, "board/Game.html", {'form': form})
 
     def get_initial(self):
         return {'user': self.request.user}

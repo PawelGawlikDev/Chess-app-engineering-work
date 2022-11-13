@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'Css/games.css'%}">
     <meta charset="UTF-8">
     <title>Games</title>
 </head>
 <body>
     {% for u in user %}
-      </p><a href="user/{{u.id}}">{{ u.nazwa }}</a></p>
+      </p><a href="user/{{u.id}}" class="game-link">{{ u.nazwa }}</a></p>
     {% endfor %}
 </body>
 </html>

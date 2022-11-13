@@ -1,24 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'Css/home.css'%}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <meta charset="UTF-8">
     <title>Home page</title>
 </head>
 <body>
-    <p id="header">{% block title %}Home{% endblock %}</p>
     {% block content %}
+    <div class="main-page">
     {% if user.is_authenticated %}
-      Hi {{ user.username }}!
-      <p><a href="{% url 'logout' %}" id="logout-butt">Log Out</a></p>
-      <p><a href="{% url 'games' %}" id="games-butt">Games</a></p>
-      <p><a href="{% url 'EditBoard' %}" id="edti-butt">Edit Board</a></p>
-      <p><a href="{% url 'play' %}" id="play-butt">Play</a></p>
-      <p><a href="{% url 'game' %}" id="game-butt">Game</a></p>
-    {% else %}
-      <p>You are not logged in</p>
-      <a href="{% url 'login' %}" id="login-butt">Log In</a>
-      <p>You are not have account</p>
-      <a href="{% url 'signup' %}" id="singUp-butt">Sign up</a>
+      <p id="welcome-text">Hi {{ user.username }}!</p>
+        <button class="butt" onclick="window.location.href='{% url 'logout' %}'" id="logout-butt"><i class="fa fa-close"> Log Out</i></button>
+      <button class="butt" onclick="window.location.href='{% url 'games' %}'" id="games-butt"><i class="fa fa-folder"> Games</i></button>
+        <button class="butt" onclick="window.location.href='{% url 'EditBoard' %}'" id="edti-butt"> Edit Board</button>
+    </div>
+        {% else %}
+      <div class="home-page">
+    <p id="header">Home Page</p>
+    <div class="content">
+      <p id="login-information">You are not logged in</p>
+      <button onclick="window.location.href='/accounts/login/';" id="login-butt">Log In</button>
+      <p id="singup-information">You are not have account</p>
+      <button onclick="window.location.href='/accounts/signup/';" id="singup-butt">Sign up</button>
+    </div>
+ </div>
     {% endif %}
     {% endblock %}
 </body>

@@ -1,0 +1,19 @@
+body {
+    background: #4a4a4a;
+    font-family: 'Rubik', sans-serif;
+}
+
+.game-link:link, .game-link:visited {
+  background-color: white;
+  color: black;
+  border: 2px solid green;
+  padding: 10px 20px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.game-link:hover, .game-link:active {
+  background-color: green;
+  color: white;
+}
