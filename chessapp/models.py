@@ -12,5 +12,5 @@ class Partie(models.Model):
     def __str__(self):
         return self.nazwa
 
-    def get_absolute_url(self):  # new
+    def get_absolute_url(self):
         return reverse(args=[str(self.id)])

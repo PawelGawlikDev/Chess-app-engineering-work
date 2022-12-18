@@ -78,15 +78,26 @@ body {
 }
 
 .butt {
-  background-color: DodgerBlue;
-  border: none;
-  color: white;
-  padding: 12px 16px;
-  font-size: 16px;
-  cursor: pointer;
+    background-color: DodgerBlue;
+    border: none;
+    color: white;
+    padding: 12px 16px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-left:70px;
+    margin-right:70px;
 }
 
-
 .butt:hover {
-  background-color: RoyalBlue;
+    background-color: RoyalBlue;
+}
+
+.main-page {
+  text-align: center;
+}
+
+#welcome-text {
+  text-align: center;
+  text-transform: uppercase;
+  color: #ffffff;
 }

@@ -17,62 +17,50 @@
 <form role="form">
 <input class="form-control" id="fen" type="text" value="">
 </form>
+<div id="buttons">
+    <p>
+    <div class="btn-group" role="group">
+    <button class="btn btn-warning" id="startpos">Reset</button>
+    <button class="btn btn-warning" id="clearpos">Clear</button>
+    </div>
+    <div class="btn-group" role="group">
+    <button class="btn btn-warning" data-toggle="tooltip" data-placement="top" title="toggle the turn (w/b) in the fen string" id="flipturn">Turn</button>
+    <button class="btn btn-warning" data-toggle="tooltip" data-placement="top" title="this doers not affect the fen string" id="flippos">Flip</button>
+    </div>
+    </p>
 
-<p>
-<div class="btn-group" role="group">
-<button class="btn btn-warning" id="startpos">Reset</button>
-<button class="btn btn-warning" id="clearpos">Clear</button>
-</div>
-<div class="btn-group" role="group">
-<button class="btn btn-warning" data-toggle="tooltip" data-placement="top" title="toggle the turn (w/b) in the fen string" id="flipturn">Turn</button>
-<button class="btn btn-warning" data-toggle="tooltip" data-placement="top" title="this doers not affect the fen string" id="flippos">Flip</button>
-</div>
-</p>
-
-<p>
-<div class="btn-group" role="group">
-<button class="btn btn-primary" id="start">Analyse</button>
-<button class="btn btn-primary" id="stop">Stop</button>
-</div>
-<button class="btn btn-primary" id="eval">Evaluate</button>
-<button id="game">Game</button>
-<div class="btn-group">
-  <button type="button" class="btn btn-danger">Play</button>
-  <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-    <span class="caret"></span>
-    <span class="sr-only">Toggle Dropdown</span>
-  </button>
-  <ul class="dropdown-menu">
-    <li><a id="aswhite" href="#">As white</a></li>
-    <li><a id="asblack" href="#">As black</a></li>
-  </ul>
+    <p>
+    <div class="btn-group" role="group">
+    <button class="btn btn-primary" id="start">Analyse</button>
+    <button class="btn btn-primary" id="stop">Stop</button>
+    </div>
+    <button id="game">Game</button>
+    <div class="btn-group">
+        <a id="aswhite" href="#">Play as white</a>
+        <a id="asblack" href="#">Play as black</a>
+    </div>
 </div>
 
-<p id="stats">
-</p>
+<div id="chessboard">
+    <p id="stats" style="weight = 400px"></p>
 
-<p id="board" style="width: 400px"></p>
-<p id="info">
-</p>
+    <p id="board" style="width: 500px; margin: auto;"></p>
+    <div id="info"></div>
+</div>
 </body>
 <script>
 var lozData = {};
 
-lozData.next     = 0; // next board id.
+lozData.next     = 0;
 lozData.hashFull = 0;
 lozData.mvNum    = 0;
 lozData.mvStr    = '';
 lozData.source   = "{% static 'lozza.js'%}";
 
-//{{{  Number.round
-
 Number.prototype.round = function (places) {
 
   return +(Math.round(this + "e+" + places)  + "e-" + places);
 }
-
-//}}}
-//{{{  lozGetURLArgs
 
 function lozGetURLArgs() {
 
@@ -86,9 +74,6 @@ function lozGetURLArgs() {
 
   return result;
 }
-
-//}}}
-//{{{  lozDecodeFEN
 
 function lozDecodeFEN (fen) {
 
@@ -106,16 +91,10 @@ function lozDecodeFEN (fen) {
   return feno;
 }
 
-//}}}
-//{{{  lozEncodeFEN
-
 function lozEncodeFEN(feno) {
 
   return feno.board + ' ' + feno.turn  + ' ' + feno.rights  + ' ' + feno.ep + ' 0 1';
 }
-
-//}}}
-//{{{  lozMakeURL
 
 function lozMakeURL(u) {
 
@@ -132,10 +111,6 @@ function lozMakeURL(u) {
   return url;
 }
 
-//}}}
-
-//{{{  lozGetInt
-
 function lozGetInt (key, def) {
 
   for (var i=0; i < lozData.tokens.length; i++)
@@ -144,9 +119,6 @@ function lozGetInt (key, def) {
 
   return def;
 }
-
-//}}}
-//{{{  lozGetInt1
 
 function lozGetInt1 (key, def) {
 
@@ -157,9 +129,6 @@ function lozGetInt1 (key, def) {
   return def;
 }
 
-//}}}
-//{{{  lozGetStr
-
 function lozGetStr (key, def) {
 
   for (var i=0; i < lozData.tokens.length; i++)
@@ -168,9 +137,6 @@ function lozGetStr (key, def) {
 
   return def;
 }
-
-//}}}
-//{{{  lozGetStrToEnd
 
 function lozGetStrToEnd (key, def) {
 
@@ -186,25 +152,16 @@ function lozGetStrToEnd (key, def) {
   return def;
 }
 
-//}}}
-//{{{  lozStandardRx
-
 function lozStandardRx (e) {
-
-  //console.log(e.data);
 
   lozData.message = e.data;
   lozData.message = lozData.message.trim();
   lozData.message = lozData.message.replace(/\s+/g,' ');
   lozData.tokens  = lozData.message.split(' ');
 
-  //{{{  bestmove
-
   if (lozData.tokens[0] == 'bestmove') {
 
     lozUpdateStats();
-
-    //console.log(lozData);
 
     lozData.bm   = lozGetStr('bestmove','');
     lozData.bmFr = lozData.bm[0] + lozData.bm[1];
@@ -217,15 +174,9 @@ function lozStandardRx (e) {
     lozUpdateBestMove();
   }
 
-  //}}}
-  //{{{  option
-
   else if (lozData.tokens[0] == 'option') {
     ;
   }
-
-  //}}}
-  //{{{  info string debug
 
   else if (lozData.tokens[0] == 'info' && lozData.tokens[1] == 'string' && lozData.tokens[2] == 'debug') {
 
@@ -234,19 +185,12 @@ function lozStandardRx (e) {
     lozUpdateInfo();
   }
 
-  //}}}
-  //{{{  info string
-
   else if (lozData.tokens[0] == 'info' && lozData.tokens[1] == 'string') {
 
     lozData.info = lozData.message.replace(/info string /,'');
 
     lozUpdateInfo();
   }
-
-  //}}}
-  //{{{  info
-
 
   else if (lozData.tokens[0] == 'info') {
 
@@ -279,18 +223,12 @@ function lozStandardRx (e) {
       lozUpdatePV();
   }
 
-  //}}}
-  //{{{  board
-
   else if (lozData.tokens[0] == 'board') {
 
     lozData.board = lozGetStr('board','');
 
     lozUpdateBoard();
   }
-
-  //}}}
-  //{{{  everything else
 
   else {
 
@@ -299,18 +237,11 @@ function lozStandardRx (e) {
     lozUpdateInfo();
   }
 
-  //}}}
 }
-
-//}}}
-//{{{  lozUpdateBestMove
 
 function lozUpdateBestMove () {
 
 }
-
-//}}}
-//{{{  lozUpdateStats
 
 function lozUpdateStats () {
 
@@ -327,9 +258,6 @@ function lozUpdateStats () {
   $(lozData.idStats).html(lozData.seconds + ' s | ' + lozData.kilonodes + ' kn | ' + lozData.knps + ' kn/s' + move + hash);
 }
 
-//}}}
-//{{{  lozUpdatePV
-
 function lozUpdatePV () {
 
   if (lozData.selDepth)
@@ -340,16 +268,10 @@ function lozUpdatePV () {
   $(lozData.idInfo).prepend(lozData.seconds + ' ' + d + ' (' + lozData.score + lozData.units + ') ' + lozData.pv + '<br>');
 }
 
-//}}}
-//{{{  lozUpdateInfo
-
 function lozUpdateInfo () {
 
   $(lozData.idInfo).prepend(lozData.info + '<br>');
 }
-
-//}}}
-//{{{  lozUpdateBoard
 
 function lozUpdateBoard () {
 
@@ -366,17 +288,13 @@ function lozUpdateBoard () {
 
 }
 
-//}}}
 </script>
 <script>
-
-var FENBUILD = 'a1.10';
 
 var args    = lozGetURLArgs();
 var uiBoard = null;
 var engine  = null;
 
-lozData.page    = 'fen.htm';
 lozData.idInfo  = '#info';
 lozData.idStats = '#stats';
 
@@ -419,22 +337,6 @@ var onDrop = function(source, target, piece, newPos, oldPos, orientation) {
 
 
 //}}}
-//{{{  eval
-
-function eval() {
-  if (engine)
-    engine.terminate();
-  engine           = new Worker(lozData.source);
-  engine.onmessage = lozStandardRx;
-  $(lozData.idInfo).html('');
-  var fen = $('#fen').val().trim();
-  engine.postMessage('ucinewgame');
-  if (fen)
-    engine.postMessage('position fen ' + fen);
-  else
-    engine.postMessage('position startpos');
-  engine.postMessage('eval');
-}
 
 //}}}
 //{{{  anal
@@ -473,7 +375,7 @@ $(function() {
   });
 
   $('#game').click(function() {
-    window.open("{% url 'game' %}?c=w&fen=" + $('#fen').val().trim(),'_blank');
+    window.open("{% url 'game' %}?c=w&fen=" + $('#fen').val().trim(), '_self', '_blank');
     return true;
   });
 
@@ -506,6 +408,10 @@ $(function() {
     return false;
   });
 
+  function colorFunction() {
+  document.getElementById("flipturn").style.backgroundColor = "orange";
+  }
+
   $('#fen').blur(function() {
     updateBoardFromFen();
     return false;
@@ -519,11 +425,6 @@ $(function() {
   $('#stop').click(function() {
     engine.terminate();
     engine = null;
-    return false;
-  });
-
-  $('#eval').click(function() {
-    eval();
     return false;
   });
 
@@ -547,9 +448,8 @@ $(function() {
     updateFenFromBoard();
 
 
-  if (args.act == 'eva')
-    eval();
-  else if (args.act == 'ana')
+
+  if (args.act == 'ana')
     anal();
   else {
     if (engine)

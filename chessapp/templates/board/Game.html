@@ -16,41 +16,37 @@
 <form role="form">
 <input class="form-control" id="fen" type="text" value="">
 </form>
+<div id="buttons">
+    <p>
+        <div class="btn-group" role="group">
+        <button class="btn btn-warning" data-toggle="tooltip" data-placement="top" title="toggle the turn (w/b) in the fen string" id="flipturn">Turn</button>
+        <button class="btn copy-butt" id="copy-butt" onclick="copyText();showDiv();">Copy</button>
+        <button class="btn btn-warning" data-toggle="tooltip" data-placement="top" title="this doers not affect the fen string" id="flippos">Flip</button>
+        </div>
+    </p>
 
-<p>
-<div class="btn-group" role="group">
-<button class="btn btn-warning" data-toggle="tooltip" data-placement="top" title="toggle the turn (w/b) in the fen string" id="flipturn">Turn</button>
-<button class="btn btn-warning" data-toggle="tooltip" data-placement="top" title="this doers not affect the fen string" id="flippos">Flip</button>
+    <p>
+    <div class="btn-group" role="group">
+    <button class="btn btn-primary" id="start">Analyse</button>
+    <button class="btn btn-primary" id="stop">Stop</button>
+    </div>
+    <div class="btn-group">
+        <a id="aswhite" href="#">Play as white</a>
+        <a id="asblack" href="#">Play as black</a>
+    </div>
 </div>
-</p>
+<div id="chessboard">
+    <p id="stats"></p>
 
-<p>
-<div class="btn-group" role="group">
-<button class="btn btn-primary" id="start">Analyse</button>
-<button class="btn btn-primary" id="stop">Stop</button>
+    <p id="board" style="width: 520px"></p>
+    <label>Status:</label>
+    <div id="status"></div>
+    <label>PGN:</label>
+    <textarea id="pgn"></textarea>
+    <p id="info"></p>
 </div>
-<button class="btn btn-primary" id="eval">Evaluate</button>
-<div class="btn-group">
-  <button type="button" class="btn btn-danger">Play</button>
-  <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-    <span class="caret"></span>
-    <span class="sr-only">Toggle Dropdown</span>
-  </button>
-  <ul class="dropdown-menu">
-    <li><a id="aswhite" href="#">As white</a></li>
-    <li><a id="asblack" href="#">As black</a></li>
-  </ul>
-</div>
-<button onclick="copyText()">Copy</button>
-<p id="board" style="width: 400px"></p>
-<label>Status:</label>
-<div id="status"></div>
-<label>PGN:</label>
-<textarea id="pgn"></textarea>
-<p id="info">
 
-</p>
-    <div class="container">
+    <div id="container" style="display: none">
         <form method="POST">
           <fieldset>
             <legend>Save</legend>
@@ -377,8 +373,6 @@ function lozUpdateBoard () {
 </script>
 <script>
 
-var FENBUILD = 'a1.10';
-
 var args    = lozGetURLArgs();
 var uiBoard = null;
 var engine  = null;
@@ -489,25 +483,7 @@ function updateStatus () {
 }
 
 //}}}
-//{{{  eval
 
-
-function eval() {
-  if (engine)
-    engine.terminate();
-  engine           = new Worker(lozData.source);
-  engine.onmessage = lozStandardRx;
-  $(lozData.idInfo).html('');
-  var fen = $('#fen').val().trim();
-  engine.postMessage('ucinewgame');
-  if (fen)
-    engine.postMessage('position fen ' + fen);
-  else
-    engine.postMessage('position startpos');
-  engine.postMessage('eval');
-}
-
-//}}}
 //{{{  anal
 
 function anal() {
@@ -588,11 +564,6 @@ $(function() {
     return false;
   });
 
-  $('#eval').click(function() {
-    eval();
-    return false;
-  });
-
   //}}}
 
   uiBoard = new ChessBoard('board', {
@@ -615,9 +586,7 @@ $(function() {
     updateFenFromBoard();
 
 
-  if (args.act == 'eva')
-    eval();
-  else if (args.act == 'ana')
+   if (args.act == 'ana')
     anal();
   else {
     if (engine)
@@ -632,6 +601,10 @@ $(function() {
 });
 </script>
 <script>
+    function showDiv() {
+        document.getElementById('container').style.display = "block";
+    }
+
     function copyText() {
 
             /* Select text area by id*/

@@ -1,14 +1,13 @@
 from django.shortcuts import render
 from django.views.generic import CreateView
-
 from .models import Partie
 from .forms import GameForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 
 def index(request):
-    curent_user = request.user
-    user = Partie.objects.filter(user=curent_user.id)
+    current_user = request.user
+    user = Partie.objects.filter(user=current_user.id)
     dane = {'user': user}
     return render(request, "games.html", dane)
 

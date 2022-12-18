@@ -1,3 +1,22 @@
 body {
-  background-color: lightblue;
+  background: #4a4a4a;
+}
+
+#myLink {
+  color: black;
+  text-decoration: none;
+}
+
+#header {
+  color:white;
+}
+
+#header {
+  text-align: center;
+}
+
+#board-buttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }

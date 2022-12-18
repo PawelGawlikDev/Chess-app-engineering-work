@@ -4,22 +4,20 @@
     {% load static %}
     <link rel="stylesheet" href="{% static 'Css/board.css'%}">
     <script src="{% static 'jquery.min.js'%}"></script>
-    <link href='http://fonts.googleapis.com/css?family=Roboto:400,700,400italic,700italic|Roboto+Slab:400,700' rel='stylesheet' type='text/css'>
     <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.1/css/font-awesome.css" rel="stylesheet">
-    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" />
     <link rel="stylesheet" href="{%static 'chessboardjs/css/chessboard-0.3.0.min.css'%}"/>
-    <link rel="stylesheet" href="{% static 'stylesheets/style.css'%}" />
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-    <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="{% static 'stylesheets/style.css'%}"/>
     <script src="{% static 'chessboardjs/js/chessboard-0.3.0.js'%}"></script>
     <script src="{% static 'js/chess.js'%}"></script>
 </head>
+<body>
     <div class="container">
       <div class="page-header">
+          <p id="header">Game viewer</p>
       </div>
       <div class="row">
-        <div class="col-xs-4">
-          <div id="board" style="width: 100%;"></div>
+        <div class="col-xs-4" style="margin: auto">
+          <div id="board" style="width: 600px; margin: auto;"></div>
           <div id="board-buttons">
             <button type="button" class="btn btn-defa`ult" id="btnStart"><i class="fa fa-fast-backward fa-lg"></i></button>
             <button type="button" class="btn btn-default" id="btnPrevious"><i class="fa fa-step-backward fa-lg"></i></button>
@@ -27,32 +25,28 @@
             <button type="button" class="btn btn-default" id="btnEnd"><i class="fa fa-fast-forward fa-lg"></i></button>
           </div>
         </div>
-          <div id="game-data"></div>
         </div>
       </div>
     </div>
-    <script >
+    <div id="game-data"></div>
+</body>
+<script >
+    pgnData = [
+      [
+        '{{partie_user.PGN}}'
+      ]
+    ];
+</script>
+<script>
 
-pgnData = [
-  [
-    '{{partie_user.PGN}}'
-  ]
-];
-    </script>
-    <script>
-
-
-//Write the game to the DOM
 function writeGameText(g) {
 
-  //remove the header to get the moves
   var h = g.header();
   var gameHeaderText = '';
   gameHeaderText += '';
   var pgn = g.pgn();
   var gameMoves = pgn.replace(/\[(.*?)\]/gm, '').replace(h.Result, '').trim();
 
-  //format the moves so each one is individually identified, so it can be highlighted
   moveArray = gameMoves.split(/([0-9]+\.\s)/).filter(function(n) {return n;});
   for (var i = 0, l = moveArray.length; i < l; ++i) {
     var s = $.trim(moveArray[i]);
@@ -73,7 +67,6 @@ function writeGameText(g) {
 
 }
 
-//buttons
 $('#btnStart').on('click', function() {
   game.reset();
   currentPly = -1;
@@ -101,7 +94,6 @@ $('#btnEnd').on('click', function() {
   board.position(game.fen());
 });
 
-//key bindings
 $(document).ready(function(){
 
   $(document).keydown(function(e){
@@ -142,7 +134,6 @@ $(document).ready(function(){
     }
   });
 
-
 });
 
 //used for clickable moves in gametext
@@ -157,8 +148,7 @@ function goToMove(ply) {
   board.position(game.fen());
 }
 
-var onChange = function onChange() { //fires when the board position changes
-  //highlight the current move
+var onChange = function onChange() {
   $("[class^='gameMove']").removeClass('highlight');
   $('.gameMove' + currentPly).addClass('highlight');
 }
@@ -173,18 +163,14 @@ function loadGame(i) {
   currentGame = i;
 }
 
-var board, //the chessboard
-    game, //the current  game
-    games, //array of all loaded games
+var board,
+    game,
+    games,
     gameHistory,
     currentPly,
     currentGame;
 
 $(document).ready(function() {
-    //start doing stuff
-
-    //only need the headers here, issue raised on github
-    //read all the games to populate the select
     for (var i = 0; i < pgnData.length; i++) {
         var g = new Chess();
         g.load('{{partie_user.FEN}}')
@@ -196,7 +182,6 @@ $(document).ready(function() {
             .text(h.White + ' - ' + h.Black + ', ' + h.Date));
     }
 
-    //set up the board
     var cfg = {
         pieceTheme: "{%static 'img/chesspieces/wikipedia/'%}" + "{piece}.png",
         position: 'start',
@@ -206,7 +191,6 @@ $(document).ready(function() {
     board = new ChessBoard('board', cfg);
     $(window).resize(board.resize);
 
-    //load the first game
     loadGame(0);
     goToMove(gameHistory.length - 1);
 });

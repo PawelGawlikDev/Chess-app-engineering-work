@@ -59,3 +59,7 @@ body {
 #log-in-button:hover {
     background: #3c4d6d;
 }
+
+body > div > div > form > ul > li {
+    display: none;
+}

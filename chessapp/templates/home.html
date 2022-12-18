@@ -3,6 +3,10 @@
 <head>
     {% load static %}
     <link rel="stylesheet" href="{% static 'Css/home.css'%}">
+    <script src="{% static 'jquery.min.js'%}"></script>
+    <link rel="stylesheet" href="{%static 'chessboardjs/css/chessboard-0.3.0.min.css'%}"/>
+    <script src="{% static 'chessboardjs/js/chessboard-0.3.0.js'%}"></script>
+    <script src="{% static 'js/chess.js'%}"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <meta charset="UTF-8">
     <title>Home page</title>
@@ -16,8 +20,28 @@
       <button class="butt" onclick="window.location.href='{% url 'games' %}'" id="games-butt"><i class="fa fa-folder"> Games</i></button>
         <button class="butt" onclick="window.location.href='{% url 'EditBoard' %}'" id="edti-butt"> Edit Board</button>
     </div>
+    <div id="myBoard" style="width: 610px; margin: auto;"></div>
+    <script>
+        var board = null
+        var game = new Chess()
+
+        function makeRandomMove () {
+          var possibleMoves = game.moves()
+
+          if (game.game_over()) return
+
+          var randomIdx = Math.floor(Math.random() * possibleMoves.length)
+          game.move(possibleMoves[randomIdx])
+          board.position(game.fen())
+
+          window.setTimeout(makeRandomMove, 500)
+        }
+
+        board = ChessBoard('myBoard', 'start')
+        window.setTimeout(makeRandomMove, 500)
+    </script>
         {% else %}
-      <div class="home-page">
+ <div class="home-page">
     <p id="header">Home Page</p>
     <div class="content">
       <p id="login-information">You are not logged in</p>
@@ -26,6 +50,28 @@
       <button onclick="window.location.href='/accounts/signup/';" id="singup-butt">Sign up</button>
     </div>
  </div>
+     <div id="myBoard2" style="width: 400px; margin: auto"></div>
+     <script>
+        var board = null
+        var game = new Chess()
+
+        function makeRandomMove () {
+          var possibleMoves = game.moves()
+
+          if (game.game_over()) return
+
+          var randomIdx = Math.floor(Math.random() * possibleMoves.length)
+          game.move(possibleMoves[randomIdx])
+          board.position(game.fen())
+
+          window.setTimeout(makeRandomMove, 500)
+        }
+
+        board = ChessBoard('myBoard2', 'start')
+
+        window.setTimeout(makeRandomMove, 500)
+     </script>
+
     {% endif %}
     {% endblock %}
 </body>
